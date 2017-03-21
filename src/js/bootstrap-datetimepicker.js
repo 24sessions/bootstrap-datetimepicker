@@ -1,7 +1,11 @@
 /*! version : 4.17.46
  =========================================================
  bootstrap-datetimejs
- https://github.com/Eonasdan/bootstrap-datetimepicker
+
+ Modified by Mike Eromko
+ https://github.com/24sessions/bootstrap-datetimepicker
+
+ Original: https://github.com/Eonasdan/bootstrap-datetimepicker
  Copyright (c) 2015 Jonathan Peterson
  =========================================================
  */
@@ -198,19 +202,39 @@
 
 			getDatePickerTemplate = function () {
 				var headTemplate = $('<thead>')
-						.append($('<tr>')
-							.append($('<th>').addClass('prev').attr('data-action', 'previous')
+					.append($('<tr>')
+						.append($('<th>').addClass('prev').attr('data-action', 'previous')
+							.append($('<span>').addClass(options.icons.previous))
+						)
+						.append($('<th>').addClass('picker-switch').attr('data-action', 'pickerSwitch').attr('colspan', (options.calendarWeeks ? '6' : '5')))
+						.append($('<th>').addClass('next').attr('data-action', 'next')
+							.append($('<span>').addClass(options.icons.next))
+						)
+					);
+				var weeksHeadTemplate = $('<thead>')
+					.append($('<tr>')
+						.append($('<th>')
+							.addClass('calendar__header')
+							.attr('colspan', (options.calendarWeeks ? '8' : '7'))
+							.append($('<span>')
+								.addClass('calendar__prev pointer')
+								.attr('data-action', 'previous')
 								.append($('<span>').addClass(options.icons.previous))
 							)
-							.append($('<th>').addClass('picker-switch').attr('data-action', 'pickerSwitch').attr('colspan', (options.calendarWeeks ? '6' : '5')))
-							.append($('<th>').addClass('next').attr('data-action', 'next')
+							.append($('<span>')
+								.attr('data-action', 'pickerSwitch')
+							)
+							.append($('<span>')
+								.addClass('calendar__next pointer')
+								.attr('data-action', 'next')
 								.append($('<span>').addClass(options.icons.next))
 							)
-						),
-					contTemplate = $('<tbody>')
-						.append($('<tr>')
-							.append($('<td>').attr('colspan', (options.calendarWeeks ? '8' : '7')))
-						);
+						)
+					);
+				var contTemplate = $('<tbody>')
+					.append($('<tr>')
+						.append($('<td>').attr('colspan', (options.calendarWeeks ? '8' : '7')))
+					);
 
 				return [
 					$('<div>').addClass('datepicker-days')
@@ -219,8 +243,8 @@
 							.append($('<tbody>'))
 						),
 					$('<div>').addClass('datepicker-weeks')
-						.append($('<table>').addClass('table-condensed')
-							.append(headTemplate.clone())
+						.append($('<table>').addClass('calendar__table')
+							.append(weeksHeadTemplate.clone())
 							.append($('<tbody>'))
 						),
 					$('<div>').addClass('datepicker-months')
@@ -337,7 +361,7 @@
 			},
 
 			getTemplate = function () {
-				var template = $('<div>').addClass('bootstrap-datetimepicker-widget dropdown-menu'),
+				var template = $('<div>').addClass(options.baseClass !== null ? options.baseClass : 'bootstrap-datetimepicker-widget dropdown-menu'),
 					dateView = $('<div>').addClass('datepicker').append(getDatePickerTemplate()),
 					timeView = $('<div>').addClass('timepicker').append(getTimePickerTemplate()),
 					content = $('<ul>').addClass('list-unstyled'),
@@ -523,7 +547,6 @@
 					currentDate.add(1, 'd');
 				}
 				widget.find('.datepicker-days thead').append(row.clone());
-				widget.find('.datepicker-weeks thead').append(row.clone());
 			},
 
 			isInDisabledDates = function (testDate) {
@@ -698,25 +721,26 @@
 
 			updateWeeks = function () {
 				var weeksView = widget.find('.datepicker-weeks'),
-					weeksViewHeader = weeksView.find('th'),
+					weeksViewHeader = weeksView.find('th > span'),
 					currentDate,
 					html = [],
 					headerText = '',
 					weeksDelta,
 					row,
 					clsNames = [],
-					i,
-					isActive;
+					isDisabled,
+					dataAction,
+					i;
 
 				if (!hasDate()) {
 					return;
 				}
 
-				weeksViewHeader.eq(0).find('span').attr('title', options.tooltips.prevWeek);
+				weeksViewHeader.eq(0).attr('title', options.tooltips.prevWeek);
 				weeksViewHeader.eq(1).removeAttr('data-action');
-				weeksViewHeader.eq(2).find('span').attr('title', options.tooltips.nextWeek);
+				weeksViewHeader.eq(2).attr('title', options.tooltips.nextWeek);
 
-				weeksView.find('.disabled').removeClass('disabled');
+				weeksView.find('.isDisabled').removeClass('isDisabled');
 
 				weeksDelta = viewDate.format('w') - getMoment().format('w');
 				if (weeksDelta < -1) {
@@ -733,24 +757,39 @@
 				weeksViewHeader.eq(1).text(headerText);
 
 				if (!isValid(viewDate.clone().subtract(1, 'w'), 'w')) {
-					weeksViewHeader.eq(0).addClass('disabled');
+					weeksViewHeader.eq(0)
+						.addClass('isDisabled')
+						.removeClass('pointer')
+						.removeAttr('data-action');
+				} else {
+					weeksViewHeader.eq(0)
+						.addClass('pointer')
+						.attr('data-action', 'previous');
 				}
 				if (!isValid(viewDate.clone().add(1, 'w'), 'w')) {
-					weeksViewHeader.eq(2).addClass('disabled');
+					weeksViewHeader.eq(2)
+						.addClass('isDisabled')
+						.removeClass('pointer')
+						.removeAttr('data-action');
+				} else {
+					weeksViewHeader.eq(2)
+						.addClass('pointer')
+						.attr('data-action', 'next');
 				}
 
 				currentDate = viewDate.clone().startOf('w').startOf('d');
 
 				for (i = 0; i < 7; i++) { //always display 7 days (should show 1 week)
 					if (currentDate.weekday() === 0) {
-						row = $('<tr>');
+						row = $('<tr>').addClass('calendar-days');
 						if (options.calendarWeeks) {
 							row.append('<td class="cw">' + currentDate.week() + '</td>');
 						}
 						html.push(row);
 					}
-					clsNames = ['day'];
-					isActive = false;
+					isDisabled = false;
+					dataAction = '';
+					clsNames = ['calendar-days__item'];
 					if (currentDate.isBefore(viewDate, 'M')) {
 						clsNames.push('old');
 					}
@@ -759,10 +798,10 @@
 					}
 					if (currentDate.isSame(date, 'd') && !unset) {
 						clsNames.push('isActive');
-						isActive = true;
 					}
 					if (!isValid(currentDate, 'd')) {
-						clsNames.push('disabled');
+						clsNames.push('isDisabled');
+						isDisabled = true;
 					}
 					if (currentDate.isSame(getMoment(), 'd')) {
 						clsNames.push('today');
@@ -770,16 +809,23 @@
 					if (currentDate.day() === 0 || currentDate.day() === 6) {
 						clsNames.push('weekend');
 					}
+					if (!isDisabled) {
+						clsNames.push('pointer');
+						dataAction = 'data-action="selectDay"';
+					}
 					notifyEvent({
 						type: 'dp.classify',
 						date: currentDate,
 						classNames: clsNames
 					});
-					if (isActive) {
-						row.append('<td data-action="selectDay" data-day="' + currentDate.format('L') + '" class="' + clsNames.join(' ') + '"><span>' + currentDate.date() + '</span></td>');
-					} else {
-						row.append('<td data-action="selectDay" data-day="' + currentDate.format('L') + '" class="' + clsNames.join(' ') + '">' + currentDate.date() + '</td>');
-					}
+					row.append(
+						'<td ' + dataAction + ' data-day="' + currentDate.format('L') + '" class="' + clsNames.join(' ') + '">'
+						+   '<span class="calendar-days__day">'
+						+      currentDate.format('dd')
+						+      '<span class="calendar-days__date">' + currentDate.date() + '</span>'
+						+   '</span>'
+						+ '</td>'
+					);
 					currentDate.add(1, 'd');
 				}
 
@@ -1155,7 +1201,9 @@
 					if ($(e.target).is('.new')) {
 						day.add(1, 'M');
 					}
-					setValue(day.date(parseInt($(e.target).text(), 10)));
+					var $td = $(e.target).closest('.calendar-days__item');
+					var date = $td.length > 0 ? getMoment($td.data('day')) : day.date(parseInt($(e.target).text(), 10));
+					setValue(date);
 					if (!hasTime() && !options.keepOpen && !options.inline) {
 						hide();
 					}
@@ -2041,6 +2089,19 @@
 			return picker;
 		};
 
+		picker.baseClass = function (baseClass) {
+			if (arguments.length === 0) {
+				return options.baseClass;
+			}
+
+			if (typeof baseClass !== 'string') {
+				throw new TypeError('baseClass() expects a string parameter');
+			}
+
+			options.baseClass = baseClass;
+			return picker;
+		};
+
 		picker.viewMode = function (viewMode) {
 			if (arguments.length === 0) {
 				return options.viewMode;
@@ -2617,6 +2678,7 @@
 		sideBySide: false,
 		daysOfWeekDisabled: false,
 		calendarWeeks: false,
+		baseClass: null,
 		viewMode: 'days',
 		toolbarPlacement: 'default',
 		showTodayButton: false,
