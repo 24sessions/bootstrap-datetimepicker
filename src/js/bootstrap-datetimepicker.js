@@ -69,6 +69,7 @@
 			component = false,
 			widget = false,
 			use24Hours,
+			lastError,
 			minViewModeNumber = 0,
 			actualFormat,
 			parseFormats,
@@ -270,35 +271,36 @@
 					middleRow = $('<tr>'),
 					bottomRow = $('<tr>');
 
-				if (isEnabled('h')) {
-					topRow.append($('<td>')
-						.append($('<a>').attr({ href: '#', tabindex: '-1', 'title': options.tooltips.incrementHour }).addClass('btn').attr('data-action', 'incrementHours').append($('<span>').addClass(options.icons.up))));
-					middleRow.append($('<td>')
-						.append($('<span>').addClass('timepicker-hour').attr({ 'data-time-component': 'hours', 'title': options.tooltips.pickHour }).attr('data-action', 'showHours')));
-					bottomRow.append($('<td>')
-						.append($('<a>').attr({ href: '#', tabindex: '-1', 'title': options.tooltips.decrementHour }).addClass('btn').attr('data-action', 'decrementHours').append($('<span>').addClass(options.icons.down))));
-				}
-				if (isEnabled('m')) {
-					if (isEnabled('h')) {
-						topRow.append($('<td>').addClass('separator'));
-						middleRow.append($('<td>').addClass('separator').html(':'));
-						bottomRow.append($('<td>').addClass('separator'));
-					}
-					topRow.append($('<td>')
-						.append($('<a>').attr({ href: '#', tabindex: '-1', 'title': options.tooltips.incrementMinute }).addClass('btn').attr('data-action', 'incrementMinutes')
-							.append($('<span>').addClass(options.icons.up))));
-					middleRow.append($('<td>')
-						.append($('<span>').addClass('timepicker-minute').attr({ 'data-time-component': 'minutes', 'title': options.tooltips.pickMinute }).attr('data-action', 'showMinutes')));
-					bottomRow.append($('<td>')
-						.append($('<a>').attr({ href: '#', tabindex: '-1', 'title': options.tooltips.decrementMinute }).addClass('btn').attr('data-action', 'decrementMinutes')
-							.append($('<span>').addClass(options.icons.down))));
-				}
+				// Hours
+				topRow.append($('<td>')
+					.append($('<a>').attr({ href: '#', tabindex: '-1', 'title': options.tooltips.incrementHour }).addClass('btn').attr('data-action', 'incrementHours').append($('<span>').addClass(options.icons.up))));
+				middleRow.append($('<td>')
+					.append($('<span>').addClass('timepicker-hour').attr({ 'data-time-component': 'hours', 'title': options.tooltips.pickHour }).attr('data-action', 'showHours')));
+				bottomRow.append($('<td>')
+					.append($('<a>').attr({ href: '#', tabindex: '-1', 'title': options.tooltips.decrementHour }).addClass('btn').attr('data-action', 'decrementHours').append($('<span>').addClass(options.icons.down))));
+
+				// Separator ":"
+				topRow.append($('<td>').addClass('separator'));
+				middleRow.append($('<td>').addClass('separator').html(':'));
+				bottomRow.append($('<td>').addClass('separator'));
+
+				// Minutes
+				topRow.append($('<td>')
+					.append($('<a>').attr({ href: '#', tabindex: '-1', 'title': options.tooltips.incrementMinute }).addClass('btn').attr('data-action', 'incrementMinutes')
+						.append($('<span>').addClass(options.icons.up))));
+				middleRow.append($('<td>')
+					.append($('<span>').addClass('timepicker-minute').attr({ 'data-time-component': 'minutes', 'title': options.tooltips.pickMinute }).attr('data-action', 'showMinutes')));
+				bottomRow.append($('<td>')
+					.append($('<a>').attr({ href: '#', tabindex: '-1', 'title': options.tooltips.decrementMinute }).addClass('btn').attr('data-action', 'decrementMinutes')
+						.append($('<span>').addClass(options.icons.down))));
+
 				if (isEnabled('s')) {
-					if (isEnabled('m')) {
-						topRow.append($('<td>').addClass('separator'));
-						middleRow.append($('<td>').addClass('separator').html(':'));
-						bottomRow.append($('<td>').addClass('separator'));
-					}
+					// Separator ":"
+					topRow.append($('<td>').addClass('separator'));
+					middleRow.append($('<td>').addClass('separator').html(':'));
+					bottomRow.append($('<td>').addClass('separator'));
+
+					// Seconds
 					topRow.append($('<td>')
 						.append($('<a>').attr({ href: '#', tabindex: '-1', 'title': options.tooltips.incrementSecond }).addClass('btn').attr('data-action', 'incrementSeconds')
 							.append($('<span>').addClass(options.icons.up))));
@@ -317,25 +319,19 @@
 				}
 
 				return $('<div>').addClass('timepicker-picker')
-					.append($('<table>').addClass('table-condensed')
+					.append($('<table>').addClass('timer__table')
 						.append([topRow, middleRow, bottomRow]));
 			},
 
 			getTimePickerTemplate = function () {
 				var hoursView = $('<div>').addClass('timepicker-hours')
-						.append($('<table>').addClass('table-condensed')),
+						.append($('<table>').addClass('timer__table')),
 					minutesView = $('<div>').addClass('timepicker-minutes')
-						.append($('<table>').addClass('table-condensed')),
+						.append($('<table>').addClass('timer__table')),
 					secondsView = $('<div>').addClass('timepicker-seconds')
-						.append($('<table>').addClass('table-condensed')),
-					ret = [getTimePickerMainTemplate()];
+						.append($('<table>').addClass('timer__table')),
+					ret = [getTimePickerMainTemplate(), hoursView, minutesView];
 
-				if (isEnabled('h')) {
-					ret.push(hoursView);
-				}
-				if (isEnabled('m')) {
-					ret.push(minutesView);
-				}
 				if (isEnabled('s')) {
 					ret.push(secondsView);
 				}
@@ -379,15 +375,19 @@
 					template.addClass('wider');
 				}
 
-				if (options.sideBySide && hasDate() && hasTime()) {
+				if (options.sideBySide /*&& hasDate() && hasTime()*/) {
 					template.addClass('timepicker-sbs');
 					if (options.toolbarPlacement === 'top') {
 						template.append(toolbar);
 					}
 					template.append(
-						$('<div>').addClass('row')
-							.append(dateView.addClass('col-md-6'))
-							.append(timeView.addClass('col-md-6'))
+						$('<table>').addClass('calendar_timer__table')
+							.append($('<tbody>')
+								.append($('<tr>')
+									.append($('<td>').append(dateView))
+									.append($('<td>').addClass('timer').append(timeView))
+								)
+							)
 					);
 					if (options.toolbarPlacement === 'bottom') {
 						template.append(toolbar);
@@ -506,10 +506,45 @@
 				});
 			},
 
-			notifyEvent = function (e) {
-				if (e.type === 'dp.change' && ((e.date && e.date.isSame(e.oldDate)) || (!e.date && !e.oldDate))) {
+			addInfoAboutChangeToEvent = function (e) {
+				if (!e.date && !e.oldDate) {
 					return;
 				}
+				else if (e.date && e.oldDate && e.date.isSame(e.oldDate)) {
+					return;
+				}
+
+				e.timeChanged = true;
+				e.dateChanged = true;
+				e.weekChanged = true;
+
+				if (e.date && e.oldDate) {
+					var date = e.date.clone();
+					var oldDate = e.oldDate.clone();
+
+					if (Math.abs(date.startOf('d').diff(oldDate.startOf('d'), 'd')) === 0) {
+						e.dateChanged = false;
+					}
+					if (Math.abs(date.startOf('w').diff(oldDate.startOf('w'), 'w')) === 0) {
+						e.weekChanged = false;
+					}
+				}
+			},
+
+			notifyEvent = function (e, extraInfo) {
+
+				if (typeof extraInfo == 'object') {
+					$.extend(true, e, extraInfo);
+				}
+
+				if (e.type === 'dp.change') {
+					if ((e.date && e.date.isSame(e.oldDate)) || (!e.date && !e.oldDate)) {
+						return;
+					} else {
+						addInfoAboutChangeToEvent(e);
+					}
+				}
+
 				element.trigger(e);
 			},
 
@@ -566,34 +601,45 @@
 			},
 
 			isValid = function (targetMoment, granularity) {
+				lastError = false;
+
 				if (!targetMoment.isValid()) {
+					lastError = 'invalid';
 					return false;
 				}
 				if (options.disabledDates && granularity === 'd' && isInDisabledDates(targetMoment)) {
+					lastError = 'disabledDate';
 					return false;
 				}
 				if (options.enabledDates && granularity === 'd' && !isInEnabledDates(targetMoment)) {
+					lastError = 'nonEnabledDate';
 					return false;
 				}
 				if (options.minDate && targetMoment.isBefore(options.minDate, granularity)) {
+					lastError = 'minDate';
 					return false;
 				}
 				if (options.maxDate && targetMoment.isAfter(options.maxDate, granularity)) {
+					lastError = 'maxDate';
 					return false;
 				}
 				if (options.daysOfWeekDisabled && granularity === 'd' && options.daysOfWeekDisabled.indexOf(targetMoment.day()) !== -1) {
+					lastError = 'disabledDayOfWeek';
 					return false;
 				}
 				if (options.disabledHours && (granularity === 'h' || granularity === 'm' || granularity === 's') && isInDisabledHours(targetMoment)) {
+					lastError = 'disabledHour';
 					return false;
 				}
 				if (options.enabledHours && (granularity === 'h' || granularity === 'm' || granularity === 's') && !isInEnabledHours(targetMoment)) {
+					lastError = 'notEnabledHour';
 					return false;
 				}
 				if (options.disabledTimeIntervals && (granularity === 'h' || granularity === 'm' || granularity === 's')) {
+					lastError = 'disabledTimeInterval';
 					var found = false;
 					$.each(options.disabledTimeIntervals, function () {
-						if (targetMoment.isBetween(this[0], this[1])) {
+						if (targetMoment.isBetween(this[0], this[1], null, '[]')) { // [] = inclusivity of both range limits
 							found = true;
 							return false;
 						}
@@ -603,6 +649,14 @@
 					}
 				}
 				return true;
+			},
+
+			needSearchOfValidTime = function (date, newDate, granularity) {
+				return newDate.isSame(date, 'd')
+					&& !isValid(newDate, granularity)
+					&& (lastError == 'disabledHour'
+					|| lastError == 'notEnabledHour'
+					|| lastError == 'disabledTimeInterval');
 			},
 
 			fillMonths = function () {
@@ -1203,6 +1257,7 @@
 					}
 					var $td = $(e.target).closest('.calendar-days__item');
 					var date = $td.length > 0 ? getMoment($td.data('day')) : day.date(parseInt($(e.target).text(), 10));
+					date = date.startOf('d');
 					setValue(date);
 					if (!hasTime() && !options.keepOpen && !options.inline) {
 						hide();
@@ -1211,42 +1266,60 @@
 
 				incrementHours: function () {
 					var newDate = date.clone().add(1, 'h');
-					if (isValid(newDate, 'h')) {
+					while(needSearchOfValidTime(date, newDate, 'h')) {
+						newDate.add(1, 'h');
+					}
+					if (newDate.isSame(date, 'd') && isValid(newDate, 'h')) {
 						setValue(newDate);
 					}
 				},
 
 				incrementMinutes: function () {
 					var newDate = date.clone().add(options.stepping, 'm');
-					if (isValid(newDate, 'm')) {
+					while(needSearchOfValidTime(date, newDate, 'm')) {
+						newDate.add(options.stepping, 'm');
+					}
+					if (newDate.isSame(date, 'd') && isValid(newDate, 'm')) {
 						setValue(newDate);
 					}
 				},
 
 				incrementSeconds: function () {
 					var newDate = date.clone().add(1, 's');
-					if (isValid(newDate, 's')) {
+					while(needSearchOfValidTime(date, newDate, 's')) {
+						newDate.add(1, 's');
+					}
+					if (newDate.isSame(date, 'd') && isValid(newDate, 's')) {
 						setValue(newDate);
 					}
 				},
 
 				decrementHours: function () {
 					var newDate = date.clone().subtract(1, 'h');
-					if (isValid(newDate, 'h')) {
+					while(needSearchOfValidTime(date, newDate, 'h')) {
+						newDate.subtract(1, 'h');
+					}
+					if (newDate.isSame(date, 'd') && isValid(newDate, 'h')) {
 						setValue(newDate);
 					}
 				},
 
 				decrementMinutes: function () {
 					var newDate = date.clone().subtract(options.stepping, 'm');
-					if (isValid(newDate, 'm')) {
+					while(needSearchOfValidTime(date, newDate, 'm')) {
+						newDate.subtract(options.stepping, 'm');
+					}
+					if (newDate.isSame(date, 'd') && isValid(newDate, 'm')) {
 						setValue(newDate);
 					}
 				},
 
 				decrementSeconds: function () {
 					var newDate = date.clone().subtract(1, 's');
-					if (isValid(newDate, 's')) {
+					while(needSearchOfValidTime(date, newDate, 's')) {
+						newDate.subtract(1, 's');
+					}
+					if (newDate.isSame(date, 'd') && isValid(newDate, 's')) {
 						setValue(newDate);
 					}
 				},
@@ -1585,6 +1658,12 @@
 				}
 
 				currentViewMode = Math.max(minViewModeNumber, currentViewMode);
+
+				if (isEnabled('h') && isEnabled('m')) {
+					$('td.timer').show();
+				} else {
+					$('td.timer').hide();
+				}
 
 				if (!unset) {
 					setValue(date);
