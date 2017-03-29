@@ -801,7 +801,7 @@
 					headerText = window.moment.relativeWeeks.past.replace('%s', -1 * weeksDelta);
 				} else if (weeksDelta == -1) {
 					headerText = window.moment.relativeWeeks.prev;
-				} else if (weeksDelta == 0) {
+				} else if (weeksDelta === 0) {
 					headerText = window.moment.relativeWeeks.now;
 				} else if (weeksDelta == 1) {
 					headerText = window.moment.relativeWeeks.next;
@@ -875,7 +875,7 @@
 					row.append(
 						'<td ' + dataAction + ' data-day="' + currentDate.format('L') + '" class="' + clsNames.join(' ') + '">'
 						+   '<span class="calendar-days__day">'
-						+      currentDate.format('dd')
+						+      '<span>' + currentDate.format('dd') + '</span>'
 						+      '<span class="calendar-days__date">' + currentDate.date() + '</span>'
 						+   '</span>'
 						+ '</td>'
