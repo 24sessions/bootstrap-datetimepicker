@@ -779,7 +779,6 @@
 					currentDate,
 					html = [],
 					headerText = '',
-					weeksDelta,
 					row,
 					clsNames = [],
 					isDisabled,
@@ -796,17 +795,13 @@
 
 				weeksView.find('.isDisabled').removeClass('isDisabled');
 
-				weeksDelta = viewDate.format('w') - getMoment().format('w');
-				if (weeksDelta < -1) {
-					headerText = window.moment.relativeWeeks.past.replace('%s', -1 * weeksDelta);
-				} else if (weeksDelta == -1) {
-					headerText = window.moment.relativeWeeks.prev;
-				} else if (weeksDelta === 0) {
+				if (getMoment().isSame(viewDate, 'w')) {
 					headerText = window.moment.relativeWeeks.now;
-				} else if (weeksDelta == 1) {
-					headerText = window.moment.relativeWeeks.next;
 				} else {
-					headerText = window.moment.relativeWeeks.future.replace('%s', weeksDelta);
+					var startOfWeek = viewDate.clone().startOf('w').startOf('d'),
+						endOfWeek = viewDate.clone().endOf('w').startOf('d');
+
+					headerText = startOfWeek.format('D MMM') + ' - ' + endOfWeek.format('D MMM');
 				}
 				weeksViewHeader.eq(1).text(headerText);
 
