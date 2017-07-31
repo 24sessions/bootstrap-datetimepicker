@@ -803,6 +803,9 @@
 
 					headerText = startOfWeek.format('D MMM') + ' - ' + endOfWeek.format('D MMM');
 				}
+				if (options.displayedTimeZone) {
+					headerText += ' (' + options.displayedTimeZone + ')';
+				}
 				weeksViewHeader.eq(1).text(headerText);
 
 				if (!isValid(viewDate.clone().subtract(1, 'w'), 'w')) {
@@ -1788,10 +1791,24 @@
 			}
 
 			if (typeof newZone !== 'string') {
-				throw new TypeError('newZone() expects a string parameter');
+				throw new TypeError('timeZone() expects a string parameter');
 			}
 
 			options.timeZone = newZone;
+
+			return picker;
+		};
+
+		picker.displayedTimeZone = function (newZone) {
+			if (arguments.length === 0) {
+				return options.displayedTimeZone;
+			}
+
+			if (typeof newZone !== 'string') {
+				throw new TypeError('displayedTimeZone() expects a string parameter');
+			}
+
+			options.displayedTimeZone = newZone;
 
 			return picker;
 		};
@@ -2695,6 +2712,7 @@
 
 	$.fn.datetimepicker.defaults = {
 		timeZone: '',
+		displayedTimeZone: '',
 		format: false,
 		dayViewHeaderFormat: 'MMMM YYYY',
 		extraFormats: false,
